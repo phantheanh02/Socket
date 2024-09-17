@@ -46,6 +46,7 @@ int main(int argc, char const *argv[])
     printf("Server started. \n");
 
     // Step 4: Waiting for connect request from client
+    socklen_t len = sizeof(clientAddr);;
     connfd = accept(listenfd, (struct sockaddr *)&clientAddr, &len);
 
     // Step 5: Communicate with client
