@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <netdb.h>
 
 #define BUFF_SIZE 128
 #define SERV_PORT 5050
@@ -14,12 +15,11 @@
 int main(int argc, char const *argv[])
 {
     int sockfd, receiveBytes, sendBytes;
-    socklen_t len;
     char buff[BUFF_SIZE + 1], receiveMsg[BUFF_SIZE + 1];
     struct sockaddr_in serverAddr;
 
     // Step 1: Constructor socket
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0)
     {
         perror("Error create socket: ");
@@ -32,9 +32,14 @@ int main(int argc, char const *argv[])
     serverAddr.sin_addr.s_addr = inet_addr(SERV_ADDR);
     serverAddr.sin_port = htons(SERV_PORT);
 
-    // Step 3: Communicate with server
-    len = sizeof(serverAddr);
-    connect(sockfd, (struct sockaddr *) &serverAddr, len); // asynchronous error
+    // Step 3: Connect with server
+    if (connect(sockfd, (struct sockaddr *)&serverAddr, sizeof(serverAddr)))
+    {
+        perror("Error connect with server\n");
+        return 0;
+    }
+    
+    // Step 4: Communicate with server
     while (1)
     {
         memset(buff,'\0',(strlen(buff)+1));
@@ -43,14 +48,14 @@ int main(int argc, char const *argv[])
         printf("Send to server: ");
         scanf("%s", buff);
 
-        sendBytes = sendto(sockfd, buff, BUFF_SIZE, 0, (struct sockaddr *)&serverAddr, len);
+        sendBytes = send(sockfd, buff, BUFF_SIZE, 0);
         if (sendBytes < 0)
         {
             perror("Error send to server: ");
             return 0;
         }
 
-        receiveBytes = recvfrom(sockfd, receiveMsg, BUFF_SIZE, 0, (struct sockaddr *)&serverAddr, &len);
+        receiveBytes = recv(sockfd, receiveMsg, BUFF_SIZE, 0);
         if (receiveBytes < 0)
         {
             perror("Error recevie from server: ");
